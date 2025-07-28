@@ -1,9 +1,11 @@
-import { PencilIcon, Play, Trash } from 'lucide-react'
+'use client'
+
+import { Play, Trash } from 'lucide-react'
 import Link from 'next/link'
-import { Fragment, useMemo } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 import type { TTest } from '@/app/suite/[suiteId]/test/[testId]/loader'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 import { Polling } from '../Polling'
 import { PageHeader } from '../shared/PageHeader'
@@ -11,17 +13,22 @@ import { RunStatusIcon } from '../shared/RunStatusIcon'
 import { SectionHeader } from '../shared/SectionHeader'
 import { formatDate } from '../shared/utils'
 import { Button } from '../ui/button'
+import { Textarea } from '../ui/textarea'
 
 export function TestDetails({
   test,
   runTest,
   deleteTest,
+  saveTest,
 }: {
   test: TTest
   runTest: (formData: FormData) => Promise<void>
   deleteTest: (formData: FormData) => Promise<void>
+  saveTest: (formData: FormData) => Promise<void>
 }) {
   const poll = useMemo(() => test.runs.some((run) => run.status === 'pending'), [test.runs])
+
+  const [evaluation, setEvaluation] = useState(test.evaluation)
 
   return (
     <Fragment>
@@ -37,58 +44,22 @@ export function TestDetails({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <SectionHeader
-            title="Steps"
-            actions={[
-              <Link href={`/suite/${test.suiteId}/test/${test.id}/edit`} key="edit-steps-link">
-                <Button variant="outline" size="icon">
-                  <PencilIcon className="w-4 h-4" />
-                </Button>
-              </Link>,
+          <SectionHeader title="Evaluation" actions={[]} />
 
-              <form action={deleteTest} key="delete-test-form">
-                <Button variant="destructive" size="icon">
-                  <Trash className="w-4 h-4" />
-                </Button>
-              </form>,
-            ]}
-          />
+          <Textarea value={evaluation} onChange={(e) => setEvaluation(e.target.value)} />
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {test.steps.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={2} className="">
-                    No steps found
-                  </TableCell>
-                </TableRow>
-              )}
+          <div className="flex justify-end gap-2 mt-2">
+            <form action={saveTest} key="save-test-form">
+              <input type="hidden" name="evaluation" value={evaluation} />
+              <Button type="submit">Save</Button>
+            </form>
 
-              {test.steps.map((step) => (
-                <TableRow key={step.id}>
-                  <TableCell className="font-medium flex items-center gap-2">{step.order}</TableCell>
-                  <TableCell>{step.description}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-
-            {test.evaluation && (
-              <TableFooter>
-                <TableRow>
-                  <TableCell>Eval</TableCell>
-                  <TableCell>
-                    <p className="break-words">{test.evaluation}</p>
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            )}
-          </Table>
+            <form action={deleteTest} key="delete-test-form">
+              <Button variant="destructive" size="icon">
+                <Trash className="w-4 h-4" />
+              </Button>
+            </form>
+          </div>
         </div>
 
         {/* Runs */}

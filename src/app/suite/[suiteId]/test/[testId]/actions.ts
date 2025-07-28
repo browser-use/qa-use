@@ -3,10 +3,28 @@
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { redirect, RedirectType } from 'next/navigation'
+import { z } from 'zod/v4'
 
 import { db } from '@/lib/db/db'
 import * as schema from '@/lib/db/schema'
 import { inngest } from '@/lib/inngest/client'
+
+const zSaveTest = z.object({
+  evaluation: z.string(),
+})
+
+/**
+ * Save the test evaluation.
+ */
+export async function saveTestAction(testId: number, form: FormData) {
+  const data = zSaveTest.parse({
+    evaluation: form.get('evaluation'),
+  })
+
+  await db.update(schema.test).set({ evaluation: data.evaluation }).where(eq(schema.test.id, testId))
+
+  revalidatePath(`/suite/${testId}/test/${testId}`)
+}
 
 export async function runTestAction(testId: number, _: FormData) {
   // NOTE: First we create a new suite run and all related test runs.
@@ -15,7 +33,6 @@ export async function runTestAction(testId: number, _: FormData) {
     const test = await db.query.test.findFirst({
       where: eq(schema.test.id, testId),
       with: {
-        steps: true,
         suite: true,
       },
     })
@@ -31,14 +48,6 @@ export async function runTestAction(testId: number, _: FormData) {
         status: 'pending',
       })
       .returning()
-
-    for (const step of test.steps) {
-      await tx.insert(schema.testRunStep).values({
-        testRunId: newTestRun.id,
-        stepId: step.id,
-        status: 'pending',
-      })
-    }
 
     return { test, testRunId: newTestRun.id }
   })

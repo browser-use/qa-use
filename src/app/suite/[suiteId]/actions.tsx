@@ -18,11 +18,7 @@ export async function runSuiteAction(suiteId: number, _: FormData) {
     const suite = await db.query.suite.findFirst({
       where: eq(schema.suite.id, suiteId),
       with: {
-        tests: {
-          with: {
-            steps: true,
-          },
-        },
+        tests: true,
       },
     })
 
@@ -39,12 +35,7 @@ export async function runSuiteAction(suiteId: number, _: FormData) {
       .returning()
 
     for (const test of suite.tests) {
-      // NOTE: We skip test runs with no steps because they won't do anything.
-      if (test.steps.length === 0) {
-        continue
-      }
-
-      const [newTestRun] = await tx
+      await tx
         .insert(schema.testRun)
         .values({
           testId: test.id,
@@ -52,14 +43,6 @@ export async function runSuiteAction(suiteId: number, _: FormData) {
           status: 'pending',
         })
         .returning()
-
-      for (const step of test.steps) {
-        await tx.insert(schema.testRunStep).values({
-          testRunId: newTestRun.id,
-          stepId: step.id,
-          status: 'pending',
-        })
-      }
     }
 
     return newSuiteRun.id
@@ -173,7 +156,6 @@ export async function setNotificationsEmailAddressAction(suiteId: number, formDa
       <SuiteNotificationsSetupEmail
         suiteId={data.suiteId}
         suiteName={dbSuite.name}
-        suiteDomain={dbSuite.domain}
         suiteNotificationsEmailAddress={dbSuite.notificationsEmailAddress}
       />
     ),

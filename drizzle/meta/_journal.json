@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1753444295471,
-      "tag": "0000_numerous_madame_masque",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1753449664746,
-      "tag": "0001_greedy_mandarin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1753451652371,
-      "tag": "0002_crazy_chamber",
+      "when": 1753698601835,
+      "tag": "0000_cloudy_molecule_man",
       "breakpoints": true
     }
   ]

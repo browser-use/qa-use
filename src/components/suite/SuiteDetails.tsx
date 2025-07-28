@@ -71,7 +71,7 @@ export function SuiteDetails({
 
   return (
     <Fragment>
-      <PageHeader title={suite.name} subtitle={suite.domain} back={{ href: '/', label: 'All Suites' }} />
+      <PageHeader title={suite.name} back={{ href: '/', label: 'All Suites' }} />
 
       {/* Body with Tabs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-7">

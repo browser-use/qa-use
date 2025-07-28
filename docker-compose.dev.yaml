@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      tags:
+        - use-qa-app:dev
     develop:
       watch:
         - path: ./drizzle.config.ts
@@ -77,6 +79,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      tags:
+        - use-qa-app:dev
     command: pnpm drizzle-kit migrate --config ./drizzle.config.ts
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/qa-use

@@ -7,14 +7,13 @@ import type { TTestRun } from '@/app/suite/[suiteId]/test/[testId]/run/[testRunI
 import { Polling } from '@/components/Polling'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { RunStatusBadge } from '@/components/shared/RunStatusBadge'
-import { RunStatusIcon } from '@/components/shared/RunStatusIcon'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { formatDate } from '@/components/shared/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { TRunStatus } from '@/lib/db/schema'
 
 export function TestRunDetails({ run }: { run: TTestRun }) {
-  const { test, error, status, publicShareUrl, liveUrl, testRunSteps } = run
+  const { test, error, status, publicShareUrl, liveUrl } = run
 
   const actions = useMemo(() => {
     const actions = [{ link: `/suite/${run.test.suiteId}/test/${run.test.id}`, label: 'View Test' }]
@@ -42,42 +41,43 @@ export function TestRunDetails({ run }: { run: TTestRun }) {
 
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="col-span-1">
-          <SectionHeader
-            title="Steps"
-            actions={[
-              //
-              <RunStatusBadge key="test-runs-status-badge" status={run.status} />,
-            ]}
-          />
+          <div>
+            <SectionHeader
+              title="Evaluation"
+              actions={[
+                //
+                <RunStatusBadge key="test-runs-status-badge" status={run.status} />,
+              ]}
+            />
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status</TableHead>
-                <TableHead>#</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {testRunSteps.map((trs) => (
-                <TableRow key={trs.id}>
-                  <TableCell>
-                    <RunStatusIcon status={trs.status} />
-                  </TableCell>
-                  <TableCell>{trs.testStep.order}</TableCell>
-                  <TableCell>{trs.testStep.description}</TableCell>
+            <pre className="w-full whitespace-pre-wrap p-5 bg-gray-50 rounded-md border border-gray-300">
+              {test.evaluation}
+            </pre>
+          </div>
+
+          <div className="mt-5">
+            <SectionHeader title="Steps" actions={[]} />
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Step</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>URL</TableHead>
                 </TableRow>
-              ))}
+              </TableHeader>
 
-              <TableRow>
-                <TableCell>
-                  <RunStatusIcon status={status} />
-                </TableCell>
-                <TableCell></TableCell>
-                <TableCell className="max-w-[300px] break-words">{test.evaluation}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+              <TableBody>
+                {run.runSteps.map((step) => (
+                  <TableRow key={step.id}>
+                    <TableCell>{step.index}</TableCell>
+                    <TableCell>{step.description}</TableCell>
+                    <TableCell>{step.url}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           <div className="mt-5">
             <SectionHeader

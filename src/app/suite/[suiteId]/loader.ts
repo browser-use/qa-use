@@ -10,9 +10,6 @@ export async function loader(suiteId: number) {
     where: eq(schema.suite.id, suiteId),
     with: {
       tests: {
-        with: {
-          steps: true,
-        },
         orderBy: [schema.test.createdAt],
       },
       runs: {

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { TestDetails } from '@/components/test/TestDetails'
 
-import { deleteTestAction, runTestAction } from './actions'
+import { deleteTestAction, runTestAction, saveTestAction } from './actions'
 import { loader } from './loader'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +24,7 @@ export default async function TestPage({ params }: { params: Promise<{ suiteId: 
 
   const runTest = runTestAction.bind(null, testIdNum)
   const deleteTest = deleteTestAction.bind(null, testIdNum)
+  const saveTest = saveTestAction.bind(null, testIdNum)
 
-  return <TestDetails test={test} runTest={runTest} deleteTest={deleteTest} />
+  return <TestDetails test={test} runTest={runTest} deleteTest={deleteTest} saveTest={saveTest} />
 }

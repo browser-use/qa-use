@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-import { createSuiteAction, seedSuiteAction } from './actions'
+import { createSuiteAction } from './actions'
 import { loader } from './loader'
 
 export const dynamic = 'force-dynamic'
@@ -36,31 +36,23 @@ export default async function Page() {
 
       {/* Suites List */}
 
-      <SectionHeader
-        title="Test Suites"
-        actions={[
-          <CreateSuiteDialog key="create-suite-dialog" />,
-          <form key="seed-suite-form" action={seedSuiteAction}>
-            <Button variant="outline" type="submit">
-              Seed
-            </Button>
-          </form>,
-        ]}
-      />
+      <SectionHeader title="Test Suites" actions={[<CreateSuiteDialog key="create-suite-dialog" />]} />
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Name</TableHead>
-            <TableHead>Domain</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead>Created At</TableHead>
+            <TableHead>Tests</TableHead>
+            <TableHead>CRON</TableHead>
+            <TableHead>Last Run</TableHead>
             <TableHead>{/* Actions */}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {suites.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="">
+              <TableCell colSpan={6} className="">
                 No suites found...
               </TableCell>
             </TableRow>
@@ -68,8 +60,10 @@ export default async function Page() {
           {suites.map((suite) => (
             <TableRow key={suite.id}>
               <TableCell className="font-medium">{suite.name}</TableCell>
-              <TableCell>{suite.domain}</TableCell>
               <TableCell>{formatDate(suite.createdAt)}</TableCell>
+              <TableCell>{suite.tests.length}</TableCell>
+              <TableCell>{getCronCadenceLabel(suite.cronCadence)}</TableCell>
+              <TableCell>{suite.lastCronRunAt ? formatDate(suite.lastCronRunAt) : 'Never'}</TableCell>
               <TableCell className="text-right">
                 <Link href={`/suite/${suite.id}`}>View</Link>
               </TableCell>
@@ -103,13 +97,6 @@ function CreateSuiteDialog() {
               <Input id="name" name="name" type="text" placeholder="e.g., Login functionality test" required />
             </div>
 
-            <div>
-              <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-1">
-                Domain
-              </label>
-              <Input id="domain" name="domain" type="text" placeholder="e.g., example.com" required />
-            </div>
-
             <div className="flex justify-end gap-2">
               <Button type="submit">Create</Button>
             </div>
@@ -118,4 +105,16 @@ function CreateSuiteDialog() {
       </DialogContent>
     </Dialog>
   )
+}
+
+function getCronCadenceLabel(cadence: 'hourly' | 'daily' | null) {
+  if (cadence === 'hourly') {
+    return 'Hourly'
+  }
+
+  if (cadence === 'daily') {
+    return 'Daily'
+  }
+
+  return 'None'
 }

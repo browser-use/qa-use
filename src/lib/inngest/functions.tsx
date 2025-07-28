@@ -112,7 +112,6 @@ async function _startTestRun({ testRunId }: { testRunId: number }): Promise<numb
       test: {
         with: {
           suite: true,
-          steps: true,
         },
       },
     },
@@ -129,7 +128,6 @@ async function _startTestRun({ testRunId }: { testRunId: number }): Promise<numb
   const definition: TestDefinition = {
     evaluation: dbTestRun.test.evaluation,
     label: dbTestRun.test.label,
-    steps: dbTestRun.test.steps,
   }
 
   // Start browser task
@@ -147,7 +145,7 @@ async function _startTestRun({ testRunId }: { testRunId: number }): Promise<numb
       use_adblock: true,
       use_proxy: true,
       max_agent_steps: 10,
-      allowed_domains: [`*.${dbTestRun.test.suite.domain}`],
+      // allowed_domains: [`*.${dbTestRun.test.suite.domain}`],
       structured_output_json: JSON.stringify(RESPONSE_JSON_SCHEMA),
     },
   })
@@ -185,9 +183,6 @@ async function _pollTaskUntilFinished({ testRunId }: { testRunId: number }) {
   while (true) {
     const dbTestRun = await db.query.testRun.findFirst({
       where: eq(schema.testRun.id, testRunId),
-      with: {
-        testRunSteps: true,
-      },
     })
 
     if (!dbTestRun) {
@@ -208,6 +203,23 @@ async function _pollTaskUntilFinished({ testRunId }: { testRunId: number }) {
 
     switch (buTaskResponse.data.status) {
       case 'finished': {
+        // NOTE: Update steps progress.
+        for (const step of buTaskResponse.data.steps) {
+          await db
+            .insert(schema.testRunStep)
+            .values({
+              testRunId: dbTestRun.id,
+              browserUseId: step.id,
+              index: step.step,
+              url: step.url,
+              description: step.evaluation_previous_goal,
+            })
+            .onConflictDoNothing({
+              target: [schema.testRunStep.browserUseId],
+            })
+        }
+
+        // NOTE: Assess task completion.
         const taskResult = getTaskResponse(buTaskResponse.data.output)
 
         if (taskResult.status === 'pass') {
@@ -222,14 +234,6 @@ async function _pollTaskUntilFinished({ testRunId }: { testRunId: number }) {
                 liveUrl: buTaskResponse.data.live_url,
               })
               .where(eq(schema.testRun.id, dbTestRun.id))
-
-            // NOTE: Here we update all steps at once and mark them as passed.
-            await tx
-              .update(schema.testRunStep)
-              .set({
-                status: 'passed' as const,
-              })
-              .where(eq(schema.testRunStep.testRunId, dbTestRun.id))
           })
         }
 
@@ -245,19 +249,6 @@ async function _pollTaskUntilFinished({ testRunId }: { testRunId: number }) {
                 liveUrl: buTaskResponse.data.live_url,
               })
               .where(eq(schema.testRun.id, dbTestRun.id))
-
-            // NOTE: We manually check each step to see if it was performed as expected.
-            for (const step of dbTestRun.testRunSteps) {
-              // TODO: Unify step ID types!
-              const passed = taskResult.steps?.find((s) => s.id === `${step.stepId}`)
-
-              await tx
-                .update(schema.testRunStep)
-                .set({
-                  status: passed ? 'passed' : 'failed',
-                })
-                .where(eq(schema.testRunStep.id, step.id))
-            }
           })
         }
 
@@ -274,6 +265,21 @@ async function _pollTaskUntilFinished({ testRunId }: { testRunId: number }) {
               publicShareUrl: buTaskResponse.data.public_share_url,
             })
             .where(eq(schema.testRun.id, dbTestRun.id))
+        }
+
+        for (const step of buTaskResponse.data.steps) {
+          await db
+            .insert(schema.testRunStep)
+            .values({
+              testRunId: dbTestRun.id,
+              browserUseId: step.id,
+              index: step.step,
+              url: step.url,
+              description: step.evaluation_previous_goal,
+            })
+            .onConflictDoNothing({
+              target: [schema.testRunStep.browserUseId],
+            })
         }
 
         await new Promise((resolve) => setTimeout(resolve, 1_000))
@@ -375,7 +381,6 @@ async function _sendSuiteNotification({ suiteRunId }: { suiteRunId: number }) {
       <SuiteFailedEmail
         suiteId={dbSuiteRun.suite.id}
         suiteName={dbSuiteRun.suite.name}
-        suiteDomain={dbSuiteRun.suite.domain}
         suiteStartedAt={dbSuiteRun.createdAt}
         suiteFinishedAt={dbSuiteRun.createdAt}
         runs={dbSuiteRun.testRuns.map((testRun) => ({

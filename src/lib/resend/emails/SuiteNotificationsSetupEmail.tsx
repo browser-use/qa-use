@@ -3,7 +3,6 @@ import * as React from 'react'
 type SuiteNotificationsSetupEmailProps = {
   suiteId: number
   suiteName: string
-  suiteDomain: string
   suiteNotificationsEmailAddress: string | null
 }
 
@@ -12,13 +11,11 @@ type SuiteNotificationsSetupEmailProps = {
  */
 export function SuiteNotificationsSetupEmail({
   suiteName,
-  suiteDomain,
   suiteNotificationsEmailAddress,
 }: SuiteNotificationsSetupEmailProps) {
   return (
     <div>
       <h1>Suite Notifications Setup - {suiteName}</h1>
-      <h2>{suiteDomain}</h2>
 
       <p>QA Use will send you an email if the suite fails to {suiteNotificationsEmailAddress}!</p>
     </div>

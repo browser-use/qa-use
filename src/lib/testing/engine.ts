@@ -55,11 +55,6 @@ export type TestDefinition = {
   label: string
 
   /**
-   * The steps you need to take to get there.
-   */
-  steps: { id: number; description: string }[]
-
-  /**
    * The success criteria for the final state of the application.
    */
   evaluation: string
@@ -145,14 +140,7 @@ The task will be given in the following format:
 
 \`\`\`
 <test>
-  <steps>
-    <step id="...">
-      The step description..
-    </step>
-  </steps>
-  <evaluation>
-    The success criteria for the final state of the application.
-  </evaluation>
+  The task description, steps you need to take to get there, and the success criteria for the final state of the application.
 </test>
 \`\`\`
 
@@ -162,13 +150,10 @@ The task will be given in the following format:
 
 \`\`\`
 <test>
-  <steps>
-    <step id="1">Go to the example.com website</step>
-    <step id="2">Type in "London" in the search input</step>
-    <step id="3">Click the search button</step>
-    <step id="4">The app should show a list of results</step>
-  </steps>
-  <evaluation>The app should show at least one result in the search results page</evaluation>
+  Go to the example.com website
+  Type in "London" in the search input
+  Click the search button
+  The app should show a list of results
 </test>
 \`\`\`
 
@@ -181,7 +166,7 @@ The task will be given in the following format:
 # Example Failed Response
 
 \`\`\`
-{ "status": "failing", "steps": [ { "id": "1", "description": "Go to the search page" } ], "error": "The search page is not found" }
+{ "status": "failing", "error": "The search page is not found" }
 \`\`\`
 
 
@@ -190,10 +175,7 @@ The task will be given in the following format:
 function stringifyTest(test: TestDefinition) {
   return `
 <test>
-  <steps>
-    ${test.steps.map((step) => `<step id="${step.id}">${step.description}</step>`).join('\n')}
-  </steps>
-  <evaluation>${test.evaluation}</evaluation>
+  ${test.evaluation}
 </test>
   `.trim()
 }
@@ -214,18 +196,9 @@ ${stringifyTest(test)}
 /**
  * Lets you create a test definition.
  */
-export function createTest({
-  label,
-  steps,
-  evaluation,
-}: {
-  label: string
-  steps: string[]
-  evaluation: string
-}): TestDefinition {
+export function createTest({ label, evaluation }: { label: string; evaluation: string }): TestDefinition {
   return {
     label,
-    steps: steps.map((step, index) => ({ id: index + 1, description: step })),
     evaluation,
   }
 }

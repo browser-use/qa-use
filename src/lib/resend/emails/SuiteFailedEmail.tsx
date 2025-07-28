@@ -13,7 +13,6 @@ type SuiteRun = {
 type EmailTemplateProps = {
   suiteId: number
   suiteName: string
-  suiteDomain: string
 
   suiteStartedAt: Date
   suiteFinishedAt: Date
@@ -24,17 +23,10 @@ type EmailTemplateProps = {
 /**
  * Email template for sending out a notification when a suite fails.
  */
-export function SuiteFailedEmail({
-  suiteName,
-  suiteDomain,
-  suiteStartedAt,
-  suiteFinishedAt,
-  runs,
-}: EmailTemplateProps) {
+export function SuiteFailedEmail({ suiteName, suiteStartedAt, suiteFinishedAt, runs }: EmailTemplateProps) {
   return (
     <div>
       <h1>QA Use - Suite {suiteName} failed!</h1>
-      <h2>{suiteDomain}</h2>
 
       <p>Suite started at {suiteStartedAt.toLocaleString()}</p>
       <p>Suite finished at {suiteFinishedAt.toLocaleString()}</p>

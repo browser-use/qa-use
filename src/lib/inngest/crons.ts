@@ -21,11 +21,7 @@ export const testCron = inngest.createFunction(
     const suites = await db.query.suite.findMany({
       where: isNotNull(schema.suite.cronCadence),
       with: {
-        tests: {
-          with: {
-            steps: true,
-          },
-        },
+        tests: true,
       },
     })
 
@@ -70,12 +66,7 @@ export const testCron = inngest.createFunction(
             .returning()
 
           for (const test of suite.tests) {
-            // NOTE: We skip test runs with no steps because they won't do anything.
-            if (test.steps.length === 0) {
-              continue
-            }
-
-            const [newTestRun] = await tx
+            await tx
               .insert(schema.testRun)
               .values({
                 testId: test.id,
@@ -83,14 +74,6 @@ export const testCron = inngest.createFunction(
                 status: 'pending',
               })
               .returning()
-
-            for (const step of test.steps) {
-              await tx.insert(schema.testRunStep).values({
-                testRunId: newTestRun.id,
-                stepId: step.id,
-                status: 'pending',
-              })
-            }
           }
 
           await tx.update(schema.suite).set({ lastCronRunAt: new Date() }).where(eq(schema.suite.id, suite.id))

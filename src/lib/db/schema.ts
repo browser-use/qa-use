@@ -10,11 +10,6 @@ export const suite = pgTable('suite', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 
   /**
-   * The domain of the application under test.
-   */
-  domain: text('domain').notNull(),
-
-  /**
    * The cadence of the cron job. If not set, the suite will not be run by cron.
    */
   cronCadence: cronCadence('cron_cadence'),
@@ -59,34 +54,7 @@ export const testRelations = relations(test, ({ one, many }) => ({
     fields: [test.suiteId],
     references: [suite.id],
   }),
-  steps: many(testStep),
   runs: many(testRun),
-}))
-
-export const testStep = pgTable('test_step', {
-  id: serial('id').primaryKey(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-
-  testId: integer('test_id')
-    .references(() => test.id, { onDelete: 'cascade' })
-    .notNull(),
-
-  /**
-   * The order of the step in the test.
-   */
-  order: integer('order').notNull(),
-
-  /**
-   * The description of the step.
-   */
-  description: text('description').notNull(),
-})
-
-export const testStepRelations = relations(testStep, ({ one }) => ({
-  test: one(test, {
-    fields: [testStep.testId],
-    references: [test.id],
-  }),
 }))
 
 // Runs
@@ -187,36 +155,35 @@ export const testRunRelations = relations(testRun, ({ one, many }) => ({
     references: [suiteRun.id],
   }),
 
-  testRunSteps: many(testRunStep),
+  runSteps: many(testRunStep),
 }))
 
+/**
+ * A table containing information from https://docs.browser-use.com/api-reference/get-task#param-steps.
+ */
 export const testRunStep = pgTable(
   'test_run_step',
   {
     id: serial('id').primaryKey(),
 
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+
     testRunId: integer('test_run_id')
       .references(() => testRun.id, { onDelete: 'cascade' })
       .notNull(),
 
-    stepId: integer('step_id')
-      .references(() => testStep.id, { onDelete: 'cascade' })
-      .notNull(),
+    browserUseId: text('browser_use_id').notNull(),
 
-    status: runStatus('status').notNull(),
+    index: integer('index').notNull(),
+    url: text('url').notNull(),
+    description: text('description').notNull(),
   },
-  (table) => {
-    return [unique('test_run_step_unique').on(table.testRunId, table.stepId)]
-  },
+  (table) => [unique('unique_test_run_step_browser_use_id').on(table.browserUseId)],
 )
 
 export const testRunStepRelations = relations(testRunStep, ({ one }) => ({
   testRun: one(testRun, {
     fields: [testRunStep.testRunId],
     references: [testRun.id],
-  }),
-  testStep: one(testStep, {
-    fields: [testRunStep.stepId],
-    references: [testStep.id],
   }),
 }))
